@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env.example
+README.md
+__pycache__
+*.pyc
+*.pyo
+.env
+.deals.json
+.trusted.json
+.wallets.json
+.log_channel.json
