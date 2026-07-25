@@ -1,8 +1,9 @@
 import os
 import sys
+import json
 from pathlib import Path
 from aiohttp import web
-from aiogram.webhook import webhook_app
+from aiogram.types import Update
 
 # Загрузка .env (для локального теста)
 env_path = Path(__file__).parent / ".env"
@@ -27,30 +28,43 @@ if missing:
 try:
     from bot import bot, dp
 except ImportError:
-    print("ERROR: Не удалось импортировать bot.py. Убедись, что файл bot.py лежит в корне.")
+    print("ERROR: Не удалось импортировать bot.py. Проверь, что файл лежит в корне.")
     sys.exit(1)
 
 WEBHOOK_PATH = "/webhook"
 BASE_URL = os.environ.get("RENDER_EXTERNAL_URL")
 if not BASE_URL:
-    BASE_URL = "https://bto-garant.onrender.com"  # замените, если адрес другой
+    BASE_URL = "https://bto-garant.onrender.com"  # замените на свой реальный адрес, если нужно
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
+# Обработчик входящих обновлений
+async def handle_webhook(request):
+    try:
+        data = await request.json()
+        update = Update(**data)
+        await dp.process_update(update)
+        return web.Response(status=200)
+    except Exception as e:
+        print(f"Ошибка обработки: {e}")
+        return web.Response(status=500, text=str(e))
+
+# Создаём aiohttp приложение
+app = web.Application()
+app.router.add_post(WEBHOOK_PATH, handle_webhook)
+
+# Установка и удаление вебхука при старте/остановке
 async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
-    print(f"Webhook установлен: {WEBHOOK_URL}")
+    print(f"✅ Webhook установлен: {WEBHOOK_URL}")
 
 async def on_shutdown(app):
     await bot.delete_webhook()
-    print("Webhook удалён")
+    print("❌ Webhook удалён")
 
-def start_webhook():
-    app = webhook_app(dp, bot, webhook_path=WEBHOOK_PATH)
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-    port = int(os.environ.get("PORT", 8080))
-    print(f"Запуск aiohttp сервера на порту {port}")
-    web.run_app(app, host="0.0.0.0", port=port)
+app.on_startup.append(on_startup)
+app.on_shutdown.append(on_shutdown)
 
 if __name__ == "__main__":
-    start_webhook()
+    port = int(os.environ.get("PORT", 8080))
+    print(f"🚀 Запуск сервера на порту {port}")
+    web.run_app(app, host="0.0.0.0", port=port)
