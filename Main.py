@@ -5,9 +5,12 @@ from pathlib import Path
 from aiohttp import web
 from aiogram.types import Update
 
+print("🚀 Запуск Main.py")
+
 # Загрузка .env
 env_path = Path(__file__).parent / ".env"
 if env_path.exists():
+    print("📂 Найден .env, загружаем...")
     with open(env_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -16,13 +19,18 @@ if env_path.exists():
                 key, value = key.strip(), value.strip()
                 if not os.environ.get(key):
                     os.environ[key] = value
+                    print(f"   Загружено из .env: {key}=***")
+else:
+    print("ℹ️ .env не найден, используем переменные окружения Render")
 
 # Проверка переменных
 required_vars = ["BOT_TOKEN", "ADMIN_ID", "DEALS_CHANNEL_ID"]
 missing = [v for v in required_vars if not os.environ.get(v)]
 if missing:
-    print(f"ERROR: Missing env: {', '.join(missing)}")
+    print(f"❌ ОШИБКА: не заданы переменные: {', '.join(missing)}")
     sys.exit(1)
+else:
+    print("✅ Все переменные окружения заданы")
 
 # Импортируем бота и диспетчер из bot.py
 try:
@@ -38,8 +46,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 WEBHOOK_PATH = "/webhook"
 BASE_URL = os.environ.get("RENDER_EXTERNAL_URL")
 if not BASE_URL:
-    # Если переменной нет – используем реальный URL твоего сервиса
-    BASE_URL = "https://bto-garant.onrender.com"  # замени, если адрес другой
+    BASE_URL = "https://bto-garant.onrender.com"
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 print(f"🔗 Будет установлен вебхук: {WEBHOOK_URL}")
 
