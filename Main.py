@@ -55,7 +55,7 @@ async def handle_webhook(request):
         data = await request.json()
         print(f"📩 Получен POST на /webhook: {data}")
         update = Update(**data)
-        await dp.process_update(update)
+        await dp.feed_update(bot, update)
         return web.Response(status=200)
     except Exception as e:
         import traceback
