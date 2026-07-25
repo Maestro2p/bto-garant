@@ -6,3 +6,4 @@ pydantic_core==2.46.4
 certifi==2026.4.22
 magic-filter==1.0.12
 typing-extensions>=4.0
+uvicorn==0.34.0
