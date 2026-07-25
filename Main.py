@@ -24,20 +24,33 @@ if missing:
     print(f"ERROR: Missing env: {', '.join(missing)}")
     sys.exit(1)
 
-# Импортируем бота и диспетчер из bot.py
+# --- Попытка импорта bot.py с диагностикой ---
+print("Текущая директория:", os.getcwd())
+print("Файлы в корне:", os.listdir('.'))
+
 try:
     from bot import bot, dp
-except ImportError:
-    print("ERROR: Не удалось импортировать bot.py. Проверь, что файл лежит в корне.")
-    sys.exit(1)
+    print("✅ Импорт из bot.py успешен (from bot import bot, dp)")
+except ImportError as e:
+    print(f"❌ Ошибка импорта через from bot: {e}")
+    # Попробуем альтернативный способ
+    try:
+        import bot as bot_module
+        bot = bot_module.bot
+        dp = bot_module.dp
+        print("✅ Импорт через import bot успешен")
+    except ImportError as e2:
+        print(f"❌ Не удалось импортировать bot ни одним способом: {e2}")
+        print("Убедитесь, что файл называется ровно bot.py (регистр важен!)")
+        sys.exit(1)
 
+# --- Вебхук ---
 WEBHOOK_PATH = "/webhook"
 BASE_URL = os.environ.get("RENDER_EXTERNAL_URL")
 if not BASE_URL:
-    BASE_URL = "https://bto-garant.onrender.com"  # замените на свой реальный адрес, если нужно
+    BASE_URL = "https://bto-garant.onrender.com"  # замените, если адрес другой
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
-# Обработчик входящих обновлений
 async def handle_webhook(request):
     try:
         data = await request.json()
@@ -48,11 +61,9 @@ async def handle_webhook(request):
         print(f"Ошибка обработки: {e}")
         return web.Response(status=500, text=str(e))
 
-# Создаём aiohttp приложение
 app = web.Application()
 app.router.add_post(WEBHOOK_PATH, handle_webhook)
 
-# Установка и удаление вебхука при старте/остановке
 async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
     print(f"✅ Webhook установлен: {WEBHOOK_URL}")
