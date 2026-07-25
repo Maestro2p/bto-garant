@@ -1,7 +1,7 @@
 import os
 import sys
-import logging
 from pathlib import Path
+from aiohttp import web
 from aiogram.webhook import webhook_app
 
 # Загрузка .env (для локального теста)
@@ -30,32 +30,27 @@ except ImportError:
     print("ERROR: Не удалось импортировать bot.py. Убедись, что файл bot.py лежит в корне.")
     sys.exit(1)
 
-# Настройка вебхука
 WEBHOOK_PATH = "/webhook"
 BASE_URL = os.environ.get("RENDER_EXTERNAL_URL")
 if not BASE_URL:
-    # fallback – используй свой адрес (или оставь как есть)
-    BASE_URL = "https://bto-garant.onrender.com"  # замени на свой, если нужно
+    BASE_URL = "https://bto-garant.onrender.com"  # замените, если адрес другой
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
-async def on_startup():
+async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
     print(f"Webhook установлен: {WEBHOOK_URL}")
 
-async def on_shutdown():
+async def on_shutdown(app):
     await bot.delete_webhook()
     print("Webhook удалён")
 
 def start_webhook():
-    import uvicorn
     app = webhook_app(dp, bot, webhook_path=WEBHOOK_PATH)
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
     port = int(os.environ.get("PORT", 8080))
-    print(f"Starting webhook server on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    print(f"Запуск aiohttp сервера на порту {port}")
+    web.run_app(app, host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    # Можно выполнить настройку вебхука при старте (но uvicorn уже сделает это)
-    # Для надёжности запустим синхронно:
-    import asyncio
-    asyncio.run(on_startup())
     start_webhook()
