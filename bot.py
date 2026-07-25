@@ -2059,6 +2059,7 @@ async def cmd_logstatus(message: types.Message):
 # ==========================================
 
 def start_webhook():
+    import traceback
     from aiohttp import web
     from aiogram.types import Update
 
@@ -2071,12 +2072,17 @@ def start_webhook():
     async def handle_webhook(request):
         try:
             data = await request.json()
+            print(f"Получены данные: {data}")  # временно для диагностики
             update = Update(**data)
             await dp.process_update(update)
             return web.Response(status=200)
         except Exception as e:
-            print(f"Ошибка обработки: {e}")
-            return web.Response(status=500, text=str(e))
+            # Подробный вывод ошибки в логи
+            print("=" * 50)
+            print("ОШИБКА В WEBHOOK:")
+            traceback.print_exc()
+            print("=" * 50)
+            return web.Response(status=500, text=f"Error: {str(e)}")
 
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
@@ -2095,4 +2101,3 @@ def start_webhook():
     port = int(os.environ.get("PORT", 8080))
     print(f"🚀 Запуск сервера на порту {port}")
     web.run_app(app, host="0.0.0.0", port=port)
-    
