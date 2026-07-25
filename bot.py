@@ -1,10 +1,6 @@
-﻿# Удали это:
-# if __name__ == "__main__":
-#     asyncio.run(main())
-
-# Добавь это (в самый конец файла):
-async def set_webhook(bot: Bot, webhook_url: str):
-    await bot.set_webhook(webhook_url)
+# ==========================================
+# ЗАПУСК ВЕБХУКА (вместо polling)
+# ==========================================
 
 def start_webhook():
     import uvicorn
@@ -13,7 +9,7 @@ def start_webhook():
     WEBHOOK_PATH = "/webhook"
     BASE_URL = os.environ.get("RENDER_EXTERNAL_URL")
     if not BASE_URL:
-        BASE_URL = "https://bto-garant.onrender.com"  # твой адрес
+        BASE_URL = "https://bto-garant.onrender.com"  # замени на свой адрес, если он другой
     WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
     app = webhook_app(dp, bot, webhook_path=WEBHOOK_PATH)
